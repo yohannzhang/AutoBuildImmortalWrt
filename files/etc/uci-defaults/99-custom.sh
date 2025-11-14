@@ -7,7 +7,7 @@ echo "Starting 99-custom.sh at $(date)" >>$LOGFILE
 # 因为本项目中 单网口模式是dhcp模式 直接就能上网并且访问web界面 避免新手每次都要修改/etc/config/network中的静态ip
 # 当你刷机运行后 都调整好了 你完全可以在web页面自行关闭 wan口防火墙的入站数据
 # 具体操作方法：网络——防火墙 在wan的入站数据 下拉选项里选择 拒绝 保存并应用即可。
-uci set firewall.@zone[1].input='ACCEPT'
+# uci set firewall.@zone[1].input='ACCEPT'
 
 # 设置主机名映射，解决安卓原生 TV 无法联网的问题
 uci add dhcp domain
@@ -182,6 +182,30 @@ uci delete ttyd.@ttyd[0].interface
 # 设置所有网口可连接 SSH
 uci set dropbear.@dropbear[0].Interface=''
 uci commit
+
+add_static_host() {
+  local name="$1"
+  local ip="$2"
+  local mac="$3"
+  local leasetime="$4"
+
+  uci add dhcp host >/dev/null
+  [ -n "$name" ] && uci set dhcp.@host[-1].name="$name"
+  [ -n "$ip" ] && uci set dhcp.@host[-1].ip="$ip"
+  [ -n "$mac" ] && uci add_list dhcp.@host[-1].mac="$mac"
+  [ -n "$leasetime" ] && uci set dhcp.@host[-1].leasetime="$leasetime"
+}
+
+# Configure static DHCP leases
+add_static_host "switch" "192.168.2.2" "4C:B7:E0:1F:7D:68" "infinite"
+add_static_host "ap" "192.168.2.3" "B0:6E:BF:56:DE:F8" "infinite"
+add_static_host "fnos" "192.168.2.4" "52:54:00:AA:80:76" "infinite"
+add_static_host "nas" "192.168.2.5" "6C:1F:F7:76:17:A7" "infinite"
+add_static_host "eniac" "192.168.2.6" "D0:11:E5:B9:A6:7B" "infinite"
+add_static_host "dianshi" "192.168.2.10" "1C:B3:C9:36:38:B7" "infinite"
+add_static_host "eniac" "192.168.2.11" "fa:a7:82:95:2f:4c" "infinite"
+add_static_host "dianshi2" "192.168.2.12" "1C:B3:C9:29:62:86" "infinite"
+uci commit dhcp
 
 # 设置编译作者信息
 FILE_PATH="/etc/openwrt_release"
